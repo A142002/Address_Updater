@@ -1,0 +1,59 @@
+<!-- base/address_form.html -->
+{% extends 'base/main.html' %}
+{% block content %}
+<div class="header-bar">
+    <a href="{% url 'address' %}" class="back-link" style="color: azure; font-size: 18px; text-decoration: none;"
+    onmouseover="this.style.color='red'"
+    onmouseout="this.style.color='azure'">&#8592; Back</a>
+</div>
+<div class="card-body">
+    <form id="address-form" method="POST" action="">
+        {% csrf_token %}
+        <!-- Display street address field with error -->
+        {{ form.street_address.label_tag }}
+        {{ form.street_address }}
+        {% if form.street_address.errors %}
+            <p class="error-message">{{ form.street_address.errors }}</p>
+        {% endif %}
+
+        <!-- Display city field with error -->
+        {{ form.city.label_tag }}
+        {{ form.city }}
+        {% if form.city.errors %}
+            <p class="error-message">{{ form.city.errors }}</p>
+        {% endif %}
+
+        <!-- Display state field with error -->
+        {{ form.state.label_tag }}
+        {{ form.state }}
+        {% if form.state.errors %}
+            <p class="error-message">{{ form.state.errors }}</p>
+        {% endif %}
+
+        <!-- Display country field with error -->
+        {{ form.country.label_tag }}
+        {{ form.country }}
+        {% if form.country.errors %}
+            <p class="error-message">{{ form.country.errors }}</p>
+        {% endif %}
+
+        <!-- Display zip code field with error -->
+        {{ form.zip_code.label_tag }}
+        {{ form.zip_code }}
+        {% if form.zip_code.errors %}
+            <p class="error-message">{{ form.zip_code.errors }}</p>
+        {% endif %}
+        <br><br>
+        <input class="button" type="submit" value="Save changes">
+    </form>
+</div>
+<script>
+    // JavaScript to show alert after form submission
+    window.onload = function() {
+        // Check if the address already exists, then display the alert message
+        {% if address_already_exists %}
+            alert("Address already exists.");
+        {% endif %}
+    };
+</script>
+{% endblock content %}

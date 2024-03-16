@@ -1,0 +1,122 @@
+{% extends 'base/main.html' %}
+{% load static %}
+
+{% block content %}
+<div class="header-bar">
+    <div>
+        <h1>Hello {{ request.user|title }}</h1>
+    </div>
+    {% if request.user.is_authenticated %}
+        <a class="logout" href="{% url 'logout' %}">Logout</a>
+    {% else %}
+        <a href="{% url 'login' %}">Login</a>
+    {% endif %}
+</div>
+<div id="search-add-wrapper">
+    <form method="GET" style="margin-top:20px;display:flex;">
+        <input type="text" name="search-area" class="area" value="{{ search_input }}" style="width: 350px;">
+        <input class="button" type="submit" value="Search" style="margin-left: 10px; border: 2px solid #ccc; padding: 5px; transition: border-color 0.3s, box-shadow 0.3s;">
+    </form> 
+    <a id="add-link" href="{% url 'address-create' %}">&#x2b;</a>
+</div>
+<hr>
+<form id="delete-form" action="{% url 'address-delete-selected' %}" method="post">
+    {% csrf_token %}
+    <table>
+        <thead>
+            <tr id="header">
+                <th></th>
+                <th>Street Address</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Country</th>
+                <th>Zip code</th>
+                <th colspan="2">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for address in locations %}
+                <tr>
+                    <!-- Checkbox for selecting the row -->
+                    <td><input type="checkbox" name="selected_addresses" value="{{ address.pk }}"></td>
+                    <!-- Display address details -->
+                    <td contenteditable="true" data-address-id="{{ address.pk }}" data-field="street_address">{{ address.street_address }}</td>
+                    <td contenteditable="true" data-address-id="{{ address.pk }}" data-field="city">{{ address.city }}</td>
+                    <td contenteditable="true" data-address-id="{{ address.pk }}" data-field="state">{{ address.state }}</td>
+                    <td contenteditable="true" data-address-id="{{ address.pk }}" data-field="country">{{ address.country }}</td>
+                    <td contenteditable="true" data-address-id="{{ address.pk }}" data-field="zip_code">{{ address.zip_code }}</td>
+                    <!-- Edit link -->
+                    <td><a href="{% url 'address-edit' address.pk %}"><img class="logo" src="https://www.iconsdb.com/icons/preview/red/edit-3-xxl.png"></a></td>
+                    <!-- Delete link -->
+                    <td><a class="delete-link" href="{% url 'address-delete' address.pk %}" data-address-id="{{ address.pk }}">&#215;</a></td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7"><h3>No items</h3></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Delete button -->
+    <input type="submit" class="button" value="Delete Selected" style="margin-left: 10px; border: 2px solid #ccc; padding: 5px; transition: border-color 0.3s, box-shadow 0.3s;">
+</form>
+<!-- Pagination controls -->
+{% if is_paginated %}
+<div class="pagination">
+    <span class="step-links">
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endif %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Function to display alert before deleting selected addresses
+    document.getElementById('delete-form').addEventListener('submit', function(event) {
+        var checkboxes = document.querySelectorAll('input[name="selected_addresses"]:checked');
+        if (checkboxes.length > 0) {
+            var confirmation = confirm('Are you sure you want to delete selected addresses?');
+            if (!confirmation) {
+                event.preventDefault(); // Prevent form submission if user cancels
+            }
+        } else {
+            alert('Please select at least one address to delete.');
+            event.preventDefault(); // Prevent form submission if no addresses are selected
+        }
+    });
+
+    // Function to handle cell editing and update database
+    $('td[contenteditable="true"]').on('blur', function() {
+        var addressId = $(this).data('address-id');
+        var field = $(this).data('field');
+        var value = $(this).text();
+
+        $.ajax({
+            url: '/update-address/' + addressId + '/',
+            type: 'POST',
+            data: {
+                field: field,
+                value: value,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                console.log('Address updated successfully.');
+            },
+            error: function(xhr, status, error) {
+                console.error('Error updating address:', error);
+            }
+        });
+    });
+</script>
+
+{% endblock content %}
